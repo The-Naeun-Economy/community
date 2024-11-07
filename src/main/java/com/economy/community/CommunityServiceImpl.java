@@ -1,4 +1,7 @@
 package com.economy.community;
 
-public class CommunityServiceImpl {
+import org.springframework.stereotype.Service;
+
+@Service
+public class CommunityServiceImpl implements CommunityService {
 }

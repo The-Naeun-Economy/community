@@ -12,13 +12,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CommunityController {
 
+    private final CommunityService service;
+
     @GetMapping
     public List<Community> getCommunities() {
-        return CommunityService.getCommunities();
+        return;
     }
 
-    @GetMapping("/{community_id}")
-    public String getCommunityById(@PathVariable Long communityId) {
-
+    @GetMapping("/{id}")
+    public Community getCommunity(@PathVariable Long id) {
+        return;
     }
 }
