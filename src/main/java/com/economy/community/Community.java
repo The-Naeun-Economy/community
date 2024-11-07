@@ -23,5 +23,4 @@ public class Community {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private int likes;
-    private Enum<IndustryCategory> category;
 }
