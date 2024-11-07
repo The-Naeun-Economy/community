@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,13 +20,17 @@ import lombok.NoArgsConstructor;
 public class Community {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(nullable = false)
+    @Column(name = "")
+    @NotNull
     private long id;
-    @Column(nullable = false)
+    @Column(name = "")
+    @NotNull
     private long userId;
-    @Column(nullable = false)
+    @Column(name = "")
+    @NotNull
     private String userNickname;
-    @Column(nullable = false)
+    @Column(name = "")
+    @NotNull
     private String title;
     private String content;
     private LocalDateTime createdAt;
