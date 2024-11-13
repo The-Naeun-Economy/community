@@ -1,7 +1,9 @@
-package com.economy.community;
+package com.economy.community.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -17,23 +19,30 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Community {
+public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "")
+    @Column(name = "post_id")
     @NotNull
-    private long id;
-    @Column(name = "")
+    private Long id;
+    @Column(name = "user_id")
     @NotNull
-    private long userId;
-    @Column(name = "")
+    private Long userId;
+    @Column(name = "user_nickname")
     @NotNull
     private String userNickname;
-    @Column(name = "")
+    @Column(name = "post_title")
     @NotNull
     private String title;
+    @Column(name = "post_content")
     private String content;
+    @Column(name = "community_category")
+    @Enumerated(EnumType.STRING)
+    private CommunityCategory category;
+    @Column(name = "create_date")
     private LocalDateTime createdAt;
+    @Column(name = "update_date")
     private LocalDateTime updatedAt;
-    private int likes;
+    @Column(name = "like_id")
+    private Long likeId;
 }

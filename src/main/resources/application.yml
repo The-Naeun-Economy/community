@@ -1,3 +1,14 @@
+server:
+  port: 9000
+
 spring:
   application:
-    name: community
+    name: repick-community
+  datasource:
+    url: jdbc:mysql://localhost:3309/repick-community?serverTimezone=Asia/Seoul
+    username: dev
+    password: 1234
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true

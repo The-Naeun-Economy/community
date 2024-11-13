@@ -1,5 +1,8 @@
-package com.economy.community;
+package com.economy.community.controller;
 
+import com.economy.community.domain.Post;
+import com.economy.community.dto.PostRequest;
+import com.economy.community.service.PostService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,32 +17,34 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/communities")
 @RequiredArgsConstructor
-public class CommunityController {
+public class PostController {
 
-    private final CommunityService service;
+    private final PostService service;
 
     @GetMapping
-    public List<Community> getCommunities() {
-        return service.getCommunities();
+    public List<Post> getCommunities() {
+        return service.getAllPosts();
     }
 
     @GetMapping("/{id}")
-    public Community getCommunity(@PathVariable Long id) {
-        return service.getCommunityById(id);
+    public Post getCommunity(@PathVariable Long id) {
+        return service.getPostById(id);
     }
 
     @PostMapping
-    public Community createCommunity(@RequestBody CommunityRequest request) {
-
+    public PostRequest createCommunity(@RequestBody PostRequest request) {
+        service.createPost(request);
+        return null;
     }
 
     @PutMapping("/{id}")
-    public Community updateCommunity(@RequestBody CommunityRequest request, @PathVariable Long id) {
-
+    public PostRequest updateCommunity(@RequestBody PostRequest request, @PathVariable Long id) {
+        service.updatePost(request, id);
+        return null;
     }
 
     @DeleteMapping("/{id}")
     public void deleteCommunity(@PathVariable Long id) {
-
+        service.deletePost(id);
     }
 }
