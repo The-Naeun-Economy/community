@@ -13,4 +13,13 @@ public class CreatePostRequest {
 
     @NotNull
     private String content;
+
+    @NotNull
+    private String userId;
+
+    @NotNull
+    private String userNickname;
+
+    @NotNull
+    private String category;
 }
