@@ -1,17 +1,18 @@
 package com.economy.community.service;
 
-import com.economy.community.domain.Post;
+import com.economy.community.dto.CreatePostRequest;
+import com.economy.community.dto.DeletePostRequest;
 import com.economy.community.dto.PostRequest;
-import java.util.List;
+import com.economy.community.dto.UpdatePostRequest;
 
 public abstract interface PostService {
-    public List<Post> getAllPosts();
+    public PostRequest getAllPosts();
 
-    public Post getPostById(long id);
+    public PostRequest getPostById(long id);
 
-    public PostRequest createPost(PostRequest request);
+    public CreatePostRequest createPost(PostRequest request);
 
-    public PostRequest updatePost(PostRequest request, long id);
+    public UpdatePostRequest updatePost(PostRequest request, long id);
 
-    public void deletePost(long id);
+    public DeletePostRequest deletePost(long id);
 }

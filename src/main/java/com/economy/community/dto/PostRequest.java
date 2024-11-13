@@ -11,7 +11,12 @@ public class PostRequest {
     @NotNull
     @Description("제목은 필수입니다.")
     public String title;
+
     @NotNull
     @Description("내용은 필수입니다.")
     public String content;
+    
+    @NotNull
+    @Description("카테고리는 필수입니다.")
+    public String category;
 }
