@@ -15,11 +15,5 @@ public class CreatePostRequest {
     private String content;
 
     @NotNull
-    private String userId;
-
-    @NotNull
-    private String userNickname;
-
-    @NotNull
     private String category;
 }
