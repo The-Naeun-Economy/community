@@ -8,10 +8,12 @@ import com.economy.community.dto.DeletePostRequest;
 import com.economy.community.dto.PostResponse;
 import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
+import com.economy.community.jwt.UserAuthentication;
 import com.economy.community.repository.PostRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -52,57 +54,43 @@ public class PostServiceImpl implements PostService {
                 .commentsCount(0L)
                 .build();
         Post savedPost = postRepository.save(post);
+
         return convertToPostResponse(savedPost);
     }
 
     @Override
     public UpdatePostResponse updatePost(UpdatePostRequest request, long id) {
         Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Post post = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"));
+
+        Post post = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found with id " + id));
 
         if (!post.getUserId().equals(userId)) {
             throw new RuntimeException("You are not authorized to update this post");
         }
 
         Post updatedPost = Post.builder()
-                .id(post.getId())
-                .userId(post.getUserId())
-                .userNickname(post.getUserNickname())
                 .title(request.getTitle())
                 .content(request.getContent())
-                .category(post.getCategory())
-                .likesCount(post.getLikesCount())
-                .viewCount(post.getViewCount())
-                .commentsCount(post.getCommentsCount())
-                .deleted(true)
                 .build();
         Post savedPost = postRepository.save(updatedPost);
+
         return convertToPostResponse(savedPost);
     }
 
     @Override
-    public DeletePostRequest deletePost(DeletePostRequest request, long id) {
+    public void deletePost(DeletePostRequest request, long id) {
         Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        Post post = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"));
+
+        Post post = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found with id " + id));
 
         if (!post.getUserId().equals(userId)) {
             throw new RuntimeException("You are not authorized to delete this post");
         }
 
         Post deletedPost = Post.builder()
-                .id(post.getId())
-                .userId(post.getUserId())
-                .userNickname(post.getUserNickname())
-                .title(post.getTitle())
-                .content(post.getContent())
-                .category(post.getCategory())
-                .likesCount(post.getLikesCount())
-                .viewCount(post.getViewCount())
-                .commentsCount(post.getCommentsCount())
                 .deleted(true)
                 .build();
         postRepository.save(deletedPost);
-        return null;
     }
 
     private PostResponse convertToPostResponse(Post post) {

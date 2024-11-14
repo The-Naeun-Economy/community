@@ -18,5 +18,5 @@ public abstract interface PostService {
 
     public UpdatePostResponse updatePost(UpdatePostRequest request, long id);
 
-    public DeletePostRequest deletePost(DeletePostRequest request, long id);
+    public void deletePost(DeletePostRequest request, long id);
 }
