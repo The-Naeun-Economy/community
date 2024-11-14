@@ -1,6 +1,5 @@
 package com.economy.community.service;
 
-import com.economy.community.domain.Post;
 import com.economy.community.dto.CreatePostRequest;
 import com.economy.community.dto.DeletePostRequest;
 import com.economy.community.dto.PostRequest;
@@ -19,8 +18,7 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional(readOnly = true)
     public PostRequest getAllPosts() {
-        Post findPost = postRepository.findAll().getFirst();
-        
+
         return null;
     }
 

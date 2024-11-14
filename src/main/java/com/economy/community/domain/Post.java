@@ -51,6 +51,12 @@ public class Post {
     @Column(name = "update_date")
     private LocalDateTime updatedAt;
 
-    @Column(name = "like_id")
-    private Long likeId;
+    @Column(name = "like_count")
+    private Long likesCount;
+
+    @Column(name = "view_count")
+    private Long viewCount;
+
+    @Column(name = "comment_count")
+    private Long commentsCount;
 }
