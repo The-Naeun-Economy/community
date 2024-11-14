@@ -66,6 +66,7 @@ public class PostServiceImpl implements PostService {
                 .likesCount(post.getLikesCount())
                 .viewCount(post.getViewCount())
                 .commentsCount(post.getCommentsCount())
+                .deleted(true)
                 .build();
         Post savedPost = postRepository.save(updatedPost);
         return convertToPostResponse(savedPost);
