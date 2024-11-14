@@ -4,7 +4,6 @@ import com.economy.community.domain.CommunityCategory;
 import com.economy.community.domain.Post;
 import com.economy.community.dto.CreatePostRequest;
 import com.economy.community.dto.CreatePostResponse;
-import com.economy.community.dto.DeletePostRequest;
 import com.economy.community.dto.PostResponse;
 import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
@@ -55,7 +54,7 @@ public class PostServiceImpl implements PostService {
                 .build();
         Post savedPost = postRepository.save(post);
 
-        return convertToPostResponse(savedPost);
+        return new CreatePostResponse(savedPost);
     }
 
     @Override
@@ -74,11 +73,11 @@ public class PostServiceImpl implements PostService {
                 .build();
         Post savedPost = postRepository.save(updatedPost);
 
-        return convertToPostResponse(savedPost);
+        return new UpdatePostResponse(savedPost);
     }
 
     @Override
-    public void deletePost(DeletePostRequest request, long id) {
+    public void deletePost(long id) {
         Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         Post post = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found with id " + id));
