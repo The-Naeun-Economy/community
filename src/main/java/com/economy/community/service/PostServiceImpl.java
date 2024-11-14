@@ -9,6 +9,7 @@ import com.economy.community.dto.PostResponse;
 import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
 import com.economy.community.repository.PostRepository;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -52,16 +53,28 @@ public class PostServiceImpl implements PostService {
     @Override
     public UpdatePostResponse updatePost(UpdatePostRequest request, long id) {
         Post post = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"));
-        post.getTitle(request.getTitle());
-        post.setContent(request.getContent());
-        Post updatedPost = repository.save(post);
-        return convertToPostResponse(updatedPost);
-        return null;
+
+        Post updatedPost = Post.builder()
+                .id(post.getId())
+                .userId(post.getUserId())
+                .userNickname(post.getUserNickname())
+                .title(request.getTitle())
+                .content(request.getContent())
+                .category(post.getCategory())
+                .createdAt(post.getCreatedAt())
+                .updatedAt(LocalDateTime.now())
+                .likesCount(post.getLikesCount())
+                .viewCount(post.getViewCount())
+                .commentsCount(post.getCommentsCount())
+                .build();
+        Post savedPost = postRepository.save(updatedPost);
+        return convertToPostResponse(savedPost);
     }
 
     @Override
     public DeletePostRequest deletePost(DeletePostRequest request, long id) {
-        return null;
+        Post post = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"));
+        postRepository.delete(post);
     }
 
     private PostResponse convertToPostResponse(Post post) {

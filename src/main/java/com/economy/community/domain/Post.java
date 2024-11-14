@@ -51,4 +51,8 @@ public class Post extends BaseEntity {
 
     @Column(name = "comment_count")
     private Long commentsCount = 0L;
+
+    @Column(name = "deleted")
+    @NotNull
+    private boolean deleted = false;
 }
