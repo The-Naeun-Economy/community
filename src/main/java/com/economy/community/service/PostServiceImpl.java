@@ -38,6 +38,9 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public CreatePostResponse createPost(CreatePostRequest request) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String userNickname = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserNickname();
+
         Post post = Post.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
@@ -52,7 +55,12 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public UpdatePostResponse updatePost(UpdatePostRequest request, long id) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Post post = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"));
+
+        if (!post.getUserId().equals(userId)) {
+            throw new RuntimeException("You are not authorized to update this post");
+        }
 
         Post updatedPost = Post.builder()
                 .id(post.getId())
@@ -74,7 +82,13 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public DeletePostRequest deletePost(DeletePostRequest request, long id) {
+        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Post post = postRepository.findById(id).orElseThrow(() -> new RuntimeException("Post not found"));
+
+        if (!post.getUserId().equals(userId)) {
+            throw new RuntimeException("You are not authorized to delete this post");
+        }
+
         postRepository.delete(post);
     }
 
