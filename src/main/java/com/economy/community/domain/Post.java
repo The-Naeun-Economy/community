@@ -8,7 +8,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,11 +18,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Post {
+public class Post extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "post_id")
-    @NotNull
     private Long id;
 
     @Column(name = "user_id")
@@ -45,18 +43,12 @@ public class Post {
     @Enumerated(EnumType.STRING)
     private CommunityCategory category;
 
-    @Column(name = "create_date")
-    private LocalDateTime createdAt;
-
-    @Column(name = "update_date")
-    private LocalDateTime updatedAt;
-
     @Column(name = "like_count")
-    private Long likesCount;
+    private Long likesCount = 0L;
 
     @Column(name = "view_count")
-    private Long viewCount;
+    private Long viewCount = 0L;
 
     @Column(name = "comment_count")
-    private Long commentsCount;
+    private Long commentsCount = 0L;
 }
