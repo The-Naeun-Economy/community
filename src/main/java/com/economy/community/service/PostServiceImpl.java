@@ -9,7 +9,6 @@ import com.economy.community.dto.PostResponse;
 import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
 import com.economy.community.repository.PostRepository;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +38,8 @@ public class PostServiceImpl implements PostService {
     @Override
     public CreatePostResponse createPost(CreatePostRequest request) {
         Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String userNickname = ((UserAuthentication) SecurityContextHolder.getContext().getAuthentication()).getUserNickname();
+        String userNickname = ((UserAuthentication) SecurityContextHolder.getContext()
+                .getAuthentication()).getUserNickname();
 
         Post post = Post.builder()
                 .title(request.getTitle())
@@ -89,7 +89,20 @@ public class PostServiceImpl implements PostService {
             throw new RuntimeException("You are not authorized to delete this post");
         }
 
-        postRepository.delete(post);
+        Post deletedPost = Post.builder()
+                .id(post.getId())
+                .userId(post.getUserId())
+                .userNickname(post.getUserNickname())
+                .title(post.getTitle())
+                .content(post.getContent())
+                .category(post.getCategory())
+                .likesCount(post.getLikesCount())
+                .viewCount(post.getViewCount())
+                .commentsCount(post.getCommentsCount())
+                .deleted(true)
+                .build();
+        postRepository.save(deletedPost);
+        return null;
     }
 
     private PostResponse convertToPostResponse(Post post) {
@@ -102,4 +115,5 @@ public class PostServiceImpl implements PostService {
                 post.getViewCount(),
                 post.getCommentsCount()
         );
+    }
 }
