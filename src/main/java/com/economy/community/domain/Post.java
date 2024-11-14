@@ -55,4 +55,36 @@ public class Post extends BaseEntity {
     @Column(name = "deleted")
     @NotNull
     private boolean deleted = false;
+
+
+    public Post withUpdatedFields(String title, String content) {
+        return Post.builder()
+                .id(this.id)
+                .userId(this.userId)
+                .userNickname(this.userNickname)
+                .title(title)  // 새로운 제목으로 설정
+                .content(content)  // 새로운 내용으로 설정
+                .category(this.category)
+                .likesCount(this.likesCount)
+                .viewCount(this.viewCount)
+                .commentsCount(this.commentsCount)
+                .deleted(this.deleted)
+                .build();
+    }
+
+    public Post withDeleted() {
+        return Post.builder()
+                .id(this.id)
+                .userId(this.userId)
+                .userNickname(this.userNickname)
+                .title(this.title)
+                .content(this.content)
+                .category(this.category)
+                .likesCount(this.likesCount)
+                .viewCount(this.viewCount)
+                .commentsCount(this.commentsCount)
+                .deleted(true)  // 삭제 상태로 설정
+                .build();
+    }
+
 }
