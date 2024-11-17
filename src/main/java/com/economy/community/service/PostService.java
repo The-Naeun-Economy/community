@@ -11,6 +11,8 @@ import java.util.List;
 public interface PostService {
     List<PostResponse> getAllPosts(CommunityCategory category);
 
+    List<PostResponse> getMyPosts(Long userId);
+
     PostResponse getPostById(long id);
 
     CreatePostResponse createPost(CreatePostRequest request);

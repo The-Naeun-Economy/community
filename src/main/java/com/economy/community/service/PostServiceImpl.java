@@ -28,6 +28,14 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    public List<PostResponse> getMyPosts(Long userId) {
+        List<Post> posts = postRepository.findAllByUserId(userId);
+        return posts.stream()
+                .map(this::convertToPostResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public PostResponse getPostById(long id) {
         Post post = postRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new RuntimeException("Post not found with id " + id));
@@ -39,13 +47,15 @@ public class PostServiceImpl implements PostService {
 //        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 //        String userNickname = ((UserAuthentication) SecurityContextHolder.getContext()
 //                .getAuthentication()).getUserNickname();
+        Long userId = 1L;
+        String userNickname = "TestUser";
 
         Post post = Post.builder()
                 .title(request.getTitle())
                 .content(request.getContent())
                 .category(CommunityCategory.valueOf(request.getCategory()))
-//                .userId(userId)
-//                .userNickname(userNickname)
+                .userId(userId)
+                .userNickname(userNickname)
                 .likesCount(0L)
                 .viewCount(0L)
                 .commentsCount(0L)
