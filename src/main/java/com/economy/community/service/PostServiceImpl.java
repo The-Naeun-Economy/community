@@ -43,12 +43,12 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public CreatePostResponse createPost(CreatePostRequest request) {
+    public CreatePostResponse createPost(CreatePostRequest request, Long userId, String userNickname) {
 //        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 //        String userNickname = ((UserAuthentication) SecurityContextHolder.getContext()
 //                .getAuthentication()).getUserNickname();
-        Long userId = 1L;
-        String userNickname = "TestUser";
+//        Long userId = 1L;
+//        String userNickname = "TestUser";
 
         Post post = Post.builder()
                 .title(request.getTitle())
@@ -66,7 +66,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public UpdatePostResponse updatePost(UpdatePostRequest request, long id) {
+    public UpdatePostResponse updatePost(UpdatePostRequest request, Long id, Long userId) {
 //        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         Post post = postRepository.findByIdAndDeletedFalse(id)
@@ -76,6 +76,11 @@ public class PostServiceImpl implements PostService {
 //            throw new RuntimeException("You are not authorized to update this post");
 //        }
 
+        if (!post.getUserId().equals(userId)) {
+            System.out.println("Post Owner ID: " + post.getUserId() + ", Current User ID: " + userId);
+            throw new RuntimeException("You are not authorized to update this post");
+        }
+        
         Post updatedPost = post.withUpdatedFields(request.getTitle(), request.getContent());
 
         Post savedPost = postRepository.save(updatedPost);
@@ -84,15 +89,15 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public void deletePost(long id) {
+    public void deletePost(Long id, Long userId) {
 //        Long userId = (Long) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         Post post = postRepository.findByIdAndDeletedFalse(id)
                 .orElseThrow(() -> new RuntimeException("Post not found with id " + id));
 
-//        if (!post.getUserId().equals(userId)) {
-//            throw new RuntimeException("You are not authorized to delete this post");
-//        }
+        if (!post.getUserId().equals(userId)) {
+            throw new RuntimeException("You are not authorized to delete this post");
+        }
 
         Post deletedPost = post.withDeleted();
 

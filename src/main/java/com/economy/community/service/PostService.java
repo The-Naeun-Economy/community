@@ -15,9 +15,9 @@ public interface PostService {
 
     PostResponse getPostById(long id);
 
-    CreatePostResponse createPost(CreatePostRequest request);
+    CreatePostResponse createPost(CreatePostRequest request, Long userId, String userNickname);
 
-    UpdatePostResponse updatePost(UpdatePostRequest request, long id);
+    UpdatePostResponse updatePost(UpdatePostRequest request, Long id, Long userId);
 
-    void deletePost(long id);
+    void deletePost(Long id, Long userId);
 }
