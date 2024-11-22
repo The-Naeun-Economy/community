@@ -5,45 +5,59 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-@Component  // 이 어노테이션을 추가하여 Spring이 빈으로 등록하도록 합니다
+@Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtUtil jwtUtil;
+    private final TokenProvider tokenProvider;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        try {
+            String token = extractJwtFromRequest(request);
 
-        System.out.println("JwtAuthenticationFilter: Request URL - " + request.getRequestURI());
+            if (token != null && tokenProvider.validateToken(token)) {
+                Long userId = tokenProvider.getUserIdFromToken(token);
+                String nickName = tokenProvider.getNickNameFromToken(token);
 
-        String token = request.getHeader("Authorization");
-        if (token != null && token.startsWith("Bearer ")) {
-            token = token.substring(7); // "Bearer " 제거
-            System.out.println("Extracted Token: " + token);
+                if (nickName == null || nickName.isBlank()) {
+                    logger.error("Nickname extracted from token is null or blank");
+                }
 
-            if (jwtUtil.isTokenValid(token)) {
-                Long userId = jwtUtil.getUserIdFromToken(token);
-                String userNickname = jwtUtil.getUserNicknameFromToken(token);
+                // 권한 설정
+                List<SimpleGrantedAuthority> authorities = Collections.singletonList(
+                        new SimpleGrantedAuthority("ROLE_USER"));
 
-                System.out.println("Authenticated UserId: " + userId + ", UserNickname: " + userNickname);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userId, nickName,
+                                List.of(new SimpleGrantedAuthority("ROLE_USER")));
 
-                UserAuthentication authentication = new UserAuthentication(userId, userNickname);
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            } else {
-                System.out.println("Invalid Token");
             }
-        } else {
-            System.out.println("Authorization header missing or does not start with Bearer");
+        } catch (Exception e) {
+            // 예외 처리: 토큰 오류 시 로그와 함께 예외 메시지 반환
+            logger.error("JWT authentication failed: " + e.getMessage(), e);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
         }
 
-        chain.doFilter(request, response);
+        filterChain.doFilter(request, response);
+    }
+
+    private String extractJwtFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 }
