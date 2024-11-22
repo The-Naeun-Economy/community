@@ -110,6 +110,8 @@ public class PostServiceImpl implements PostService {
                 post.getId(),
                 post.getTitle(),
                 post.getContent(),
+                post.getUserId(),
+                post.getUserNickname(),
                 post.getCreatedAt(),
                 post.getLikesCount(),
                 post.getViewCount(),
