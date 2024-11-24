@@ -2,14 +2,17 @@ package com.economy.community.service;
 
 import com.economy.community.domain.CommunityCategory;
 import com.economy.community.domain.Post;
+import com.economy.community.domain.QPost;
 import com.economy.community.dto.CreatePostRequest;
 import com.economy.community.dto.CreatePostResponse;
 import com.economy.community.dto.PostResponse;
 import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
 import com.economy.community.repository.PostRepository;
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,24 +22,68 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
+    private final JPAQueryFactory queryFactory;
 
     @Transactional(readOnly = true)
     @Override
-    public List<PostResponse> getAllPosts(CommunityCategory category) {
-        List<Post> posts = postRepository.findAllPostsByCategory(category);
-        return posts.stream()
-                .map(this::convertToPostResponse)
-                .collect(Collectors.toList());
+    public List<PostResponse> getPosts(String category, int page, int size) {
+        CommunityCategory categoryEnum = null;
+
+        if (category != null) {
+            try {
+                categoryEnum = CommunityCategory.valueOf(category.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid category: " + category);
+            }
+        }
+
+        QPost post = QPost.post;
+        BooleanBuilder builder = new BooleanBuilder();
+
+        // 동적 조건: 삭제되지 않은 게시글
+        builder.and(post.deleted.eq(false));
+
+        // 동적 조건: 특정 카테고리 필터
+        if (category != null) {
+            builder.and(post.category.eq(categoryEnum));
+        }
+
+        return queryFactory
+                .select(Projections.constructor(PostResponse.class,
+                        post.id,
+                        post.category,
+                        post.title,
+                        post.content,
+                        post.userId,
+                        post.userNickname,
+                        post.createdAt,
+                        post.likesCount,
+                        post.viewCount,
+                        post.commentsCount))
+                .from(post)
+                .where(builder)
+                .orderBy(post.createdAt.desc())
+                .offset((long) page * size)
+                .limit(size)
+                .fetch();
     }
 
     @Transactional(readOnly = true)
     @Override
     public List<PostResponse> getMyPosts(Long userId) {
-        List<Post> posts = postRepository.findAllByUserId(userId);
-        return posts.stream()
-                .map(this::convertToPostResponse)
-                .collect(Collectors.toList());
+        QPost post = QPost.post;
+
+        return queryFactory
+                .select(Projections.constructor(PostResponse.class,
+                        post.id,
+                        post.category,
+                        post.title,
+                        post.content))
+                .from(post)
+                .where(post.userId.eq(userId).and(post.deleted.eq(false)))
+                .fetch();
     }
+
 
     @Transactional(readOnly = true)
     @Override
@@ -93,8 +140,18 @@ public class PostServiceImpl implements PostService {
 
     // 게시글 조회
     private Post findPostById(Long id) {
-        return postRepository.findByIdAndDeletedFalse(id)
-                .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + id));
+        QPost post = QPost.post;
+
+        Post result = queryFactory
+                .selectFrom(post)
+                .where(post.id.eq(id).and(post.deleted.eq(false)))
+                .fetchOne();
+
+        if (result == null) {
+            throw new IllegalArgumentException("Post not found with id: " + id);
+        }
+
+        return result;
     }
 
     // 사용자 검증 로직
@@ -108,6 +165,7 @@ public class PostServiceImpl implements PostService {
     private PostResponse convertToPostResponse(Post post) {
         return new PostResponse(
                 post.getId(),
+                post.getCategory(),
                 post.getTitle(),
                 post.getContent(),
                 post.getUserId(),
