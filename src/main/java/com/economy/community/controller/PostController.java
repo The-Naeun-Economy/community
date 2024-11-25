@@ -2,6 +2,7 @@ package com.economy.community.controller;
 
 import com.economy.community.dto.CreatePostRequest;
 import com.economy.community.dto.CreatePostResponse;
+import com.economy.community.dto.PostLikesResponse;
 import com.economy.community.dto.PostResponse;
 import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
@@ -10,6 +11,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -72,6 +74,16 @@ public class PostController {
     public void deleteCommunity(@PathVariable Long id) {
         Long userId = getAuthenticatedUserId();
         service.deletePost(id, userId);
+    }
+
+    // 게시글 좋아요
+    @PostMapping("/{id}/like")
+    public ResponseEntity<PostLikesResponse> likePost(@PathVariable Long id) {
+        Long userId = getAuthenticatedUserId();
+        String userNickname = getAuthenticatedUserNickname();
+
+        PostLikesResponse response = service.toggleLike(id, userId, userNickname);
+        return ResponseEntity.ok(response);
     }
 
     // 인증된 사용자 ID 가져오기

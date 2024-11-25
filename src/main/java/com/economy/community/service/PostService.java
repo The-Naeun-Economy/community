@@ -2,10 +2,12 @@ package com.economy.community.service;
 
 import com.economy.community.dto.CreatePostRequest;
 import com.economy.community.dto.CreatePostResponse;
+import com.economy.community.dto.PostLikesResponse;
 import com.economy.community.dto.PostResponse;
 import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
 import java.util.List;
+import org.springframework.http.ResponseEntity;
 
 public interface PostService {
     List<PostResponse> getPosts(String category, int page, int size);
@@ -19,4 +21,6 @@ public interface PostService {
     UpdatePostResponse updatePost(UpdatePostRequest request, Long id, Long userId);
 
     void deletePost(Long id, Long userId);
+
+    ResponseEntity<PostLikesResponse> likePost(Long id, Long userId);
 }

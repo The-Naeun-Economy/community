@@ -87,4 +87,12 @@ public class Post extends BaseEntity {
                 .build();
     }
 
+    public void incrementPostLikesCount() {
+        if (this.likesCount == null) {
+            this.likesCount = 1L;
+        } else {
+            this.likesCount += 1;
+        }
+    }
+
 }
