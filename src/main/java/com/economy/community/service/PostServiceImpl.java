@@ -2,17 +2,21 @@ package com.economy.community.service;
 
 import com.economy.community.domain.CommunityCategory;
 import com.economy.community.domain.Post;
+import com.economy.community.domain.PostLike;
 import com.economy.community.domain.QPost;
 import com.economy.community.dto.CreatePostRequest;
 import com.economy.community.dto.CreatePostResponse;
+import com.economy.community.dto.PostLikesResponse;
 import com.economy.community.dto.PostResponse;
 import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
+import com.economy.community.repository.PostLikeRepository;
 import com.economy.community.repository.PostRepository;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +27,7 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final JPAQueryFactory queryFactory;
+    private final PostLikeRepository postLikeRepository;
 
     @Transactional(readOnly = true)
     @Override
@@ -136,6 +141,46 @@ public class PostServiceImpl implements PostService {
         // 게시글 삭제 (불변 객체 방식)
         Post deletedPost = post.withDeleted();
         postRepository.save(deletedPost);
+    }
+
+    @Override
+    public PostLikesResponse toggleLike(Long id, Long userId, String userNickname) {
+        // 게시글 조회
+        Post post = findPostById(id);
+
+        if (post.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("You cannot like your own post.");
+        }
+
+        // 좋아요 여부 확인
+        Optional<PostLike> existingLike = postLikeRepository.findByUserIdAndPostId(userId, post);
+
+        boolean isLiked;
+
+        if (existingLike.isEmpty()) {
+            // 좋아요 추가
+            PostLike newLike = PostLike.builder()
+                    .userId(userId)
+                    .userNickname(userNickname)
+                    .postId(post)
+                    .build();
+            postLikeRepository.save(newLike);
+
+            post.incrementPostLikesCount();
+            isLiked = true;
+        } else {
+            // 좋아요 취소
+            PostLike like = existingLike.get();
+            postLikeRepository.delete(like);
+
+            post.decrementLikeCount();
+            isLiked = false;
+        }
+
+        // 게시글의 변경된 좋아요 수 저장
+        postRepository.save(post);
+
+        return new PostLikesResponse(isLiked, post.getLikesCount());
     }
 
     // 게시글 조회

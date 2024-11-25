@@ -7,7 +7,6 @@ import com.economy.community.dto.PostResponse;
 import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
 import java.util.List;
-import org.springframework.http.ResponseEntity;
 
 public interface PostService {
     List<PostResponse> getPosts(String category, int page, int size);
@@ -22,5 +21,5 @@ public interface PostService {
 
     void deletePost(Long id, Long userId);
 
-    ResponseEntity<PostLikesResponse> likePost(Long id, Long userId);
+    PostLikesResponse toggleLike(Long id, Long userId, String userNickname);
 }

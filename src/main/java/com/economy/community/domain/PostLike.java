@@ -31,6 +31,10 @@ public class PostLike {
     private Long userId;
 
     @NotNull
+    @Column(name = "user_nickname")
+    private String userNickname;
+
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
     private Post postId;
