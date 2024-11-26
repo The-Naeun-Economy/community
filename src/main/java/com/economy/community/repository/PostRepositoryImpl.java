@@ -1,6 +1,7 @@
 package com.economy.community.repository;
 
 import com.economy.community.domain.CommunityCategory;
+import com.economy.community.domain.Post;
 import com.economy.community.domain.QPost;
 import com.economy.community.dto.PostResponse;
 import com.querydsl.core.types.Projections;
@@ -54,5 +55,21 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid category: " + category, e);
         }
+    }
+
+    @Override
+    public Post findPostById(Long id) {
+        QPost post = QPost.post;
+
+        Post result = queryFactory
+                .selectFrom(post)
+                .where(post.id.eq(id).and(post.deleted.eq(false)))
+                .fetchOne();
+
+        if (result == null) {
+            throw new IllegalArgumentException("Post not found with id: " + id);
+        }
+
+        return result;
     }
 }
