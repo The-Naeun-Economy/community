@@ -93,9 +93,10 @@ public class PostServiceImpl implements PostService {
     @Transactional(readOnly = true)
     @Override
     public PostResponse getPostById(long id) {
-        Post post = findPostById(id);
-        return convertToPostResponse(post);
+        Post post = postRepository.findPostById(id);
+        return PostResponse.from(post);
     }
+
 
     @Transactional
     @Override
@@ -118,7 +119,7 @@ public class PostServiceImpl implements PostService {
     @Transactional
     @Override
     public UpdatePostResponse updatePost(UpdatePostRequest request, Long id, Long userId) {
-        Post post = findPostById(id);
+        Post post = postRepository.findPostById(id);
 
         // 사용자 검증
         validateUserAuthorization(post, userId);
@@ -133,7 +134,7 @@ public class PostServiceImpl implements PostService {
     @Transactional
     @Override
     public void deletePost(Long id, Long userId) {
-        Post post = findPostById(id);
+        Post post = postRepository.findPostById(id);
 
         // 사용자 검증
         validateUserAuthorization(post, userId);
@@ -146,7 +147,7 @@ public class PostServiceImpl implements PostService {
     @Override
     public PostLikesResponse toggleLike(Long id, Long userId, String userNickname) {
         // 게시글 조회
-        Post post = findPostById(id);
+        Post post = postRepository.findPostById(id);
 
         if (post.getUserId().equals(userId)) {
             throw new IllegalArgumentException("You cannot like your own post.");
@@ -183,21 +184,21 @@ public class PostServiceImpl implements PostService {
         return new PostLikesResponse(isLiked, post.getLikesCount());
     }
 
-    // 게시글 조회
-    private Post findPostById(Long id) {
-        QPost post = QPost.post;
-
-        Post result = queryFactory
-                .selectFrom(post)
-                .where(post.id.eq(id).and(post.deleted.eq(false)))
-                .fetchOne();
-
-        if (result == null) {
-            throw new IllegalArgumentException("Post not found with id: " + id);
-        }
-
-        return result;
-    }
+//    // 게시글 조회
+//    private Post findPostById(Long id) {
+//        QPost post = QPost.post;
+//
+//        Post result = queryFactory
+//                .selectFrom(post)
+//                .where(post.id.eq(id).and(post.deleted.eq(false)))
+//                .fetchOne();
+//
+//        if (result == null) {
+//            throw new IllegalArgumentException("Post not found with id: " + id);
+//        }
+//
+//        return result;
+//    }
 
     // 사용자 검증 로직
     private void validateUserAuthorization(Post post, Long userId) {
@@ -206,19 +207,19 @@ public class PostServiceImpl implements PostService {
         }
     }
 
-    // Post -> PostResponse 변환
-    private PostResponse convertToPostResponse(Post post) {
-        return new PostResponse(
-                post.getId(),
-                post.getCategory(),
-                post.getTitle(),
-                post.getContent(),
-                post.getUserId(),
-                post.getUserNickname(),
-                post.getCreatedAt(),
-                post.getLikesCount(),
-                post.getViewCount(),
-                post.getCommentsCount()
-        );
-    }
+//    // Post -> PostResponse 변환
+//    private PostResponse convertToPostResponse(Post post) {
+//        return new PostResponse(
+//                post.getId(),
+//                post.getCategory(),
+//                post.getTitle(),
+//                post.getContent(),
+//                post.getUserId(),
+//                post.getUserNickname(),
+//                post.getCreatedAt(),
+//                post.getLikesCount(),
+//                post.getViewCount(),
+//                post.getCommentsCount()
+//        );
+//    }
 }

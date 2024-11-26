@@ -73,6 +73,7 @@ public class Post extends BaseEntity {
     }
 
     public Post withDeleted() {
+
         return Post.builder()
                 .id(this.id)
                 .userId(this.userId)
