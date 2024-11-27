@@ -1,5 +1,7 @@
 package com.economy.community.service;
 
+import static com.economy.community.domain.QPost.post;
+
 import com.economy.community.domain.CommunityCategory;
 import com.economy.community.domain.Post;
 import com.economy.community.domain.PostLike;
@@ -32,26 +34,20 @@ public class PostServiceImpl implements PostService {
     @Transactional(readOnly = true)
     @Override
     public List<PostResponse> getPosts(String category, int page, int size) {
-        CommunityCategory categoryEnum = null;
-
-        if (category != null) {
-            try {
-                categoryEnum = CommunityCategory.valueOf(category.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Invalid category: " + category);
-            }
+        if (category == null) {
+            throw new NullPointerException("category is null");
         }
+        CommunityCategory categoryEnum = CommunityCategory.valueOfCategory(category);
 
-        QPost post = QPost.post;
         BooleanBuilder builder = new BooleanBuilder();
 
         // 동적 조건: 삭제되지 않은 게시글
         builder.and(post.deleted.eq(false));
 
-        // 동적 조건: 특정 카테고리 필터
-        if (category != null) {
-            builder.and(post.category.eq(categoryEnum));
-        }
+//        // 동적 조건: 특정 카테고리 필터
+//        if (category != null) {
+//            builder.and(post.category.eq(categoryEnum));
+//        }
 
         return queryFactory
                 .select(Projections.constructor(PostResponse.class,
@@ -123,7 +119,7 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findPostById(id);
 
         // 사용자 검증
-        validateUserAuthorization(post, userId);
+        post.validateUserAuthorization(userId);
 
         // 게시글 수정 (불변 객체 방식)
         Post updatedPost = post.withUpdatedFields(request.getTitle(), request.getContent());
@@ -138,7 +134,8 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findPostById(id);
 
         // 사용자 검증
-        validateUserAuthorization(post, userId);
+        post.validateUserAuthorization(userId);
+        //validateUserAuthorization(post, userId);
 
         // 게시글 삭제 (불변 객체 방식)
         Post deletedPost = post.withDeleted();
@@ -185,42 +182,4 @@ public class PostServiceImpl implements PostService {
         return new PostLikesResponse(isLiked, post.getLikesCount());
     }
 
-//    // 게시글 조회
-//    private Post findPostById(Long id) {
-//        QPost post = QPost.post;
-//
-//        Post result = queryFactory
-//                .selectFrom(post)
-//                .where(post.id.eq(id).and(post.deleted.eq(false)))
-//                .fetchOne();
-//
-//        if (result == null) {
-//            throw new IllegalArgumentException("Post not found with id: " + id);
-//        }
-//
-//        return result;
-//    }
-
-    // 사용자 검증 로직
-    private void validateUserAuthorization(Post post, Long userId) {
-        if (!post.getUserId().equals(userId)) {
-            throw new IllegalArgumentException("You are not authorized to perform this action on this post");
-        }
-    }
-
-//    // Post -> PostResponse 변환
-//    private PostResponse convertToPostResponse(Post post) {
-//        return new PostResponse(
-//                post.getId(),
-//                post.getCategory(),
-//                post.getTitle(),
-//                post.getContent(),
-//                post.getUserId(),
-//                post.getUserNickname(),
-//                post.getCreatedAt(),
-//                post.getLikesCount(),
-//                post.getViewCount(),
-//                post.getCommentsCount()
-//        );
-//    }
 }

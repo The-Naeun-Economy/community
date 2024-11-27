@@ -39,6 +39,7 @@ public class PostController {
             @RequestParam(required = false) String category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
+
         return service.getPosts(category, page, size);
     }
 
