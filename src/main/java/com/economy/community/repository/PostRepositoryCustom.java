@@ -5,9 +5,10 @@ import com.economy.community.dto.PostResponse;
 import java.util.List;
 
 public interface PostRepositoryCustom {
-    List<PostResponse> findPostsByCategory(String category);
 
-    List<PostResponse> findAllPosts();
+    List<PostResponse> findAllPosts(String category, int page, int size);
 
     Post findPostById(Long id);
+
+    List<PostResponse> getMyPosts(Long userId);
 }

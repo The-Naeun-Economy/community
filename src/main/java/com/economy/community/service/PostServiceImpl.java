@@ -1,11 +1,8 @@
 package com.economy.community.service;
 
-import static com.economy.community.domain.QPost.post;
-
 import com.economy.community.domain.CommunityCategory;
 import com.economy.community.domain.Post;
 import com.economy.community.domain.PostLike;
-import com.economy.community.domain.QPost;
 import com.economy.community.dto.CreatePostRequest;
 import com.economy.community.dto.CreatePostResponse;
 import com.economy.community.dto.PostLikesResponse;
@@ -14,9 +11,6 @@ import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
 import com.economy.community.repository.PostLikeRepository;
 import com.economy.community.repository.PostRepository;
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Projections;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
-    private final JPAQueryFactory queryFactory;
     private final PostLikeRepository postLikeRepository;
 
     @Transactional(readOnly = true)
@@ -37,50 +30,13 @@ public class PostServiceImpl implements PostService {
         if (category == null) {
             throw new NullPointerException("category is null");
         }
-        CommunityCategory categoryEnum = CommunityCategory.valueOfCategory(category);
-
-        BooleanBuilder builder = new BooleanBuilder();
-
-        // 동적 조건: 삭제되지 않은 게시글
-        builder.and(post.deleted.eq(false));
-
-        // 동적 조건: 특정 카테고리 필터
-        builder.and(post.category.eq(categoryEnum));
-
-        return queryFactory
-                .select(Projections.constructor(PostResponse.class,
-                        post.id,
-                        post.category,
-                        post.title,
-                        post.content,
-                        post.userId,
-                        post.userNickname,
-                        post.createdAt,
-                        post.likesCount,
-                        post.viewCount,
-                        post.commentsCount))
-                .from(post)
-                .where(builder)
-                .orderBy(post.createdAt.desc())
-                .offset((long) page * size)
-                .limit(size)
-                .fetch();
+        return postRepository.findAllPosts(category, page, size);
     }
 
     @Transactional(readOnly = true)
     @Override
     public List<PostResponse> getMyPosts(Long userId) {
-        QPost post = QPost.post;
-
-        return queryFactory
-                .select(Projections.constructor(PostResponse.class,
-                        post.id,
-                        post.category,
-                        post.title,
-                        post.content))
-                .from(post)
-                .where(post.userId.eq(userId).and(post.deleted.eq(false)))
-                .fetch();
+        return postRepository.getMyPosts(userId);
     }
 
 
