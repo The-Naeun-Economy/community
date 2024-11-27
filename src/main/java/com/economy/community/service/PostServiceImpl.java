@@ -61,9 +61,7 @@ public class PostServiceImpl implements PostService {
                 .viewCount(0L)
                 .commentsCount(0L)
                 .build();
-        System.out.println("service 1");
         Post savedPost = postRepository.save(post);
-        System.out.println("service 2");
         return new CreatePostResponse(savedPost);
     }
 
@@ -89,7 +87,6 @@ public class PostServiceImpl implements PostService {
 
         // 사용자 검증
         post.validateUserAuthorization(userId);
-        //validateUserAuthorization(post, userId);
 
         // 게시글 삭제 (불변 객체 방식)
         Post deletedPost = post.withDeleted();
