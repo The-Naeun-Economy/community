@@ -92,7 +92,7 @@ public class PostServiceImpl implements PostService {
 
     @Transactional(readOnly = true)
     @Override
-    public PostResponse getPostById(long id) {
+    public PostResponse getPostById(Long id) {
         Post post = postRepository.findPostById(id);
         return PostResponse.from(post);
     }
@@ -111,8 +111,9 @@ public class PostServiceImpl implements PostService {
                 .viewCount(0L)
                 .commentsCount(0L)
                 .build();
+        System.out.println("service 1");
         Post savedPost = postRepository.save(post);
-
+        System.out.println("service 2");
         return new CreatePostResponse(savedPost);
     }
 

@@ -13,7 +13,7 @@ public interface PostService {
 
     List<PostResponse> getMyPosts(Long userId);
 
-    PostResponse getPostById(long id);
+    PostResponse getPostById(Long id);
 
     CreatePostResponse createPost(CreatePostRequest request, Long userId, String userNickname);
 
