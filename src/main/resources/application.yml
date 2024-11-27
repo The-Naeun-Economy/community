@@ -1,3 +1,17 @@
+server:
+  port: 9000
+
+jwt:
+  secret-key: 4Ixa3PT4KhLW1fz4bJoY8z2dR4Gk7jHpB3Yw8mQvL9NdXx5vT9Yw8VhN3rB4YxK2
+
 spring:
   application:
-    name: community
+    name: repick-community
+  datasource:
+    url: jdbc:mysql://localhost:3309/repick-community?serverTimezone=Asia/Seoul
+    username: dev
+    password: 1234
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
