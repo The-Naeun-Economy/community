@@ -101,4 +101,10 @@ public class Post extends BaseEntity {
             this.likesCount -= 1;
         }
     }
+
+    public void validateUserAuthorization(Long userId) {
+        if (this.userId.equals(userId)) {
+            throw new IllegalArgumentException("You are not authorized to perform this action on this post");
+        }
+    }
 }
