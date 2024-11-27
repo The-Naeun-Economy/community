@@ -26,6 +26,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/posts").permitAll()
+                        
                         .requestMatchers("/posts/**").authenticated() // 인증 필요 경로
                         .anyRequest().permitAll()
                 )
