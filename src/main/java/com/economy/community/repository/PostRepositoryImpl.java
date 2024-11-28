@@ -21,15 +21,15 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     public List<PostResponse> findAllPosts(String category, int page, int size) {
         QPost post = QPost.post;
 
-        CommunityCategory categoryEnum = CommunityCategory.valueOfCategory(category);
-
         BooleanBuilder builder = new BooleanBuilder();
 
         // 동적 조건: 삭제되지 않은 게시글
         builder.and(post.deleted.eq(false));
 
-        // 동적 조건: 특정 카테고리 필터
-        builder.and(post.category.eq(categoryEnum));
+        if (category != null) {
+            CommunityCategory categoryEnum = CommunityCategory.valueOfCategory(category);
+            builder.and(post.category.eq(categoryEnum));
+        }
 
         return queryFactory
                 .select(Projections.constructor(PostResponse.class,

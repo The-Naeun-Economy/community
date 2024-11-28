@@ -27,9 +27,6 @@ public class PostServiceImpl implements PostService {
     @Transactional(readOnly = true)
     @Override
     public List<PostResponse> getPosts(String category, int page, int size) {
-        if (category == null) {
-            throw new NullPointerException("category is null");
-        }
         return postRepository.findAllPosts(category, page, size);
     }
 
