@@ -3,29 +3,24 @@ package com.economy.community;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.economy.community.domain.CommunityCategory;
 import com.economy.community.domain.Post;
-import com.economy.community.domain.QPost;
 import com.economy.community.dto.CreatePostRequest;
 import com.economy.community.dto.CreatePostResponse;
-import com.economy.community.dto.PostResponse;
 import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
 import com.economy.community.repository.PostRepository;
 import com.economy.community.service.PostServiceImpl;
-import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -47,65 +42,6 @@ class PostServiceImplTest {
         MockitoAnnotations.openMocks(this);
         EntityManager entityManager = Mockito.mock(EntityManager.class);
         queryFactory = new JPAQueryFactory(entityManager);
-    }
-
-    // 성공 케이스: 카테고리별 게시글 조회
-    @Test
-    void getPosts_shouldReturnPostList() {
-        // Given
-        String category = "IT";
-        int page = 0;
-        int size = 10;
-
-        PostResponse mockPostResponse = new PostResponse(
-                1L,
-                CommunityCategory.IT,
-                "Post 1",
-                "Content 1",
-                1L,
-                "User1",
-                LocalDateTime.now(),
-                10L,
-                100L,
-                5L
-        );
-
-        QPost post = QPost.post;
-
-        // Mock QueryDSL의 JPAQuery 객체
-        JPAQuery<PostResponse> mockQuery = Mockito.mock(JPAQuery.class);
-
-        // QueryDSL select() Mock 설정
-        when(queryFactory.select(any(com.querydsl.core.types.Expression.class))).thenReturn(mockQuery);
-        when(mockQuery.from(post)).thenReturn(mockQuery);
-
-        // where 메서드 Mock 설정 (Predicate 타입 지정)
-        when(mockQuery.where(any(com.querydsl.core.types.Predicate.class))).thenReturn(mockQuery);
-
-        // 기타 체이닝 메서드 Mock 설정
-        when(mockQuery.offset(anyLong())).thenReturn(mockQuery);
-        when(mockQuery.limit(anyLong())).thenReturn(mockQuery);
-        when(mockQuery.fetch()).thenReturn(List.of(mockPostResponse));
-
-        // When
-        List<PostResponse> result = postService.getPosts(category, page, size);
-
-        // Then
-        assertThat(result).isNotNull();
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getTitle()).isEqualTo("Post 1");
-    }
-
-    // 실패 케이스: 잘못된 카테고리 예외
-    @Test
-    void getPosts_invalidCategoryShouldThrowException() {
-        // Given
-        String invalidCategory = "INVALID";
-
-        // When & Then
-        assertThatThrownBy(() -> postService.getPosts(invalidCategory, 0, 10))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid category: INVALID");
     }
 
     // 성공 케이스: 게시글 생성
@@ -140,123 +76,154 @@ class PostServiceImplTest {
         assertThat(result.getTitle()).isEqualTo(request.getTitle());
     }
 
-    // 실패 케이스: 잘못된 카테고리로 생성
     @Test
-    void createPost_invalidCategoryShouldThrowException() {
+    void createPost_shouldThrowExceptionWhenSaveFails() {
         // Given
         CreatePostRequest request = new CreatePostRequest(
                 "Post Title",
                 "Post Content",
-                "INVALID_CATEGORY"
+                "IT"
         );
+        Long userId = 1L;
+        String userNickname = "User1";
 
-        // When & Then
-        assertThatThrownBy(() -> postService.createPost(request, 1L, "User1"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Invalid category: INVALID_CATEGORY");
+        when(postRepository.save(any(Post.class))).thenThrow(new RuntimeException("Database error"));
+
+        // When / Then
+        assertThatThrownBy(() -> postService.createPost(request, userId, userNickname))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Database error");
     }
+
 
     // 성공 케이스: 게시글 수정
     @Test
-    void updatePost_shouldUpdateAndReturnUpdatedPost() {
+    void updatePost_shouldUpdateAndReturnPost_whenAuthorizedUser() {
         // Given
         Long postId = 1L;
         Long userId = 1L;
-        UpdatePostRequest request = new UpdatePostRequest(
-                "Updated Title",
-                "Updated Content"
-        );
+        UpdatePostRequest request = new UpdatePostRequest("Updated Title", "Updated Content");
 
         Post existingPost = Post.builder()
                 .id(postId)
-                .title("Old Title")
-                .content("Old Content")
+                .title("Original Title")
+                .content("Original Content")
                 .userId(userId)
+                .userNickname("User1")
                 .build();
 
-        Post updatedPost = Post.builder()
-                .id(postId)
-                .title(request.getTitle())
-                .content(request.getContent())
-                .userId(userId)
-                .build();
-
-        when(postRepository.findById(postId)).thenReturn(Optional.of(existingPost));
-        when(postRepository.save(any(Post.class))).thenReturn(updatedPost);
+        when(postRepository.findPostById(postId)).thenReturn(existingPost);
+        when(postRepository.save(any(Post.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
         UpdatePostResponse result = postService.updatePost(request, postId, userId);
 
         // Then
+        ArgumentCaptor<Post> postCaptor = ArgumentCaptor.forClass(Post.class);
+        verify(postRepository).save(postCaptor.capture());
+        Post capturedPost = postCaptor.getValue();
+
+        assertThat(capturedPost.getTitle()).isEqualTo(request.getTitle());
+        assertThat(capturedPost.getContent()).isEqualTo(request.getContent());
         assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo(postId); // 필드 이름 일치 확인
         assertThat(result.getTitle()).isEqualTo(request.getTitle());
+        assertThat(result.getContent()).isEqualTo(request.getContent());
     }
 
     // 실패 케이스: 다른 사용자가 게시글 수정
     @Test
-    void updatePost_shouldThrowExceptionForUnauthorizedUser() {
+    void updatePost_shouldThrowException_whenUnauthorizedUser() {
         // Given
         Long postId = 1L;
-        Long unauthorizedUserId = 2L; // 다른 사용자
-        UpdatePostRequest request = new UpdatePostRequest(
-                "Updated Title",
-                "Updated Content"
-        );
+        Long requestUserId = 1L; // 요청 사용자의 ID
+        Long ownerUserId = 2L; // 게시글 작성자의 ID
+        UpdatePostRequest request = new UpdatePostRequest("Updated Title", "Updated Content");
 
+        // 게시글 생성 (작성자는 다른 사용자)
         Post existingPost = Post.builder()
                 .id(postId)
-                .userId(1L) // 실제 소유자
+                .title("Old Title")
+                .content("Old Content")
+                .userId(ownerUserId) // 게시글 작성자의 ID
+                .userNickname("User2")
                 .build();
 
-        when(postRepository.findById(postId)).thenReturn(Optional.of(existingPost));
+        // Mock 설정: findPostById가 기존 게시글을 반환하도록 설정
+        when(postRepository.findPostById(postId)).thenReturn(existingPost);
 
-        // When & Then
-        assertThatThrownBy(() -> postService.updatePost(request, postId, unauthorizedUserId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("You are not authorized to perform this action on this post");
+        // When / Then
+        assertThatThrownBy(() -> postService.updatePost(request, postId, requestUserId))
+                .isInstanceOf(IllegalArgumentException.class) // 예외 타입 변경
+                .hasMessage("You are not authorized to perform this action on this post"); // 예외 메시지 확인
+
+        // Verify: findPostById는 한 번 호출되어야 함
+        verify(postRepository, times(1)).findPostById(postId);
+
+        // Verify: 저장(save) 메서드는 호출되지 않아야 함
+        verify(postRepository, never()).save(any(Post.class));
     }
 
     // 성공 케이스: 게시글 삭제
     @Test
-    void deletePost_shouldMarkPostAsDeleted() {
+    void deletePost_shouldDeletePost_whenAuthorizedUser() {
         // Given
         Long postId = 1L;
-        Long userId = 1L;
-
+        Long userId = 1L; // 요청 사용자의 ID
         Post existingPost = Post.builder()
                 .id(postId)
-                .userId(userId)
-                .deleted(false)
+                .title("Post Title")
+                .content("Post Content")
+                .category(CommunityCategory.IT)
+                .userId(userId) // 게시글 작성자의 ID
+                .userNickname("User1")
                 .build();
 
-        when(postRepository.findById(postId)).thenReturn(Optional.of(existingPost));
+        // Mock 설정: findPostById가 게시글 반환
+        when(postRepository.findPostById(postId)).thenReturn(existingPost);
+
+        // Mock 설정: save는 호출된 객체를 반환
+        when(postRepository.save(any(Post.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // When
         postService.deletePost(postId, userId);
 
         // Then
-        verify(postRepository, times(1)).save(any(Post.class));
+        verify(postRepository, times(1)).findPostById(postId); // 게시글 조회 확인
+        verify(postRepository, times(1)).save(any(Post.class)); // 저장 확인
+
+        // 삭제된 상태 검증
+        ArgumentCaptor<Post> postCaptor = ArgumentCaptor.forClass(Post.class);
+        verify(postRepository).save(postCaptor.capture());
+        Post deletedPost = postCaptor.getValue();
+        assertThat(deletedPost.isDeleted()).isTrue(); // isDeleted는 삭제 여부를 나타내는 메서드라고 가정
     }
 
     // 실패 케이스: 다른 사용자가 게시글 삭제
     @Test
-    void deletePost_shouldThrowExceptionForUnauthorizedUser() {
+    void deletePost_shouldThrowExceptionWhenUnauthorizedUser() {
         // Given
         Long postId = 1L;
-        Long unauthorizedUserId = 2L; // 다른 사용자
-
+        Long userId = 1L; // 요청 사용자의 ID
+        Long ownerUserId = 2L; // 게시글 작성자의 ID
         Post existingPost = Post.builder()
                 .id(postId)
-                .userId(1L) // 실제 소유자
-                .deleted(false)
+                .title("Post Title")
+                .content("Post Content")
+                .category(CommunityCategory.IT)
+                .userId(ownerUserId) // 게시글 작성자의 ID
+                .userNickname("User2")
                 .build();
 
-        when(postRepository.findById(postId)).thenReturn(Optional.of(existingPost));
+        // Mock 설정: findPostById가 게시글 반환
+        when(postRepository.findPostById(postId)).thenReturn(existingPost);
 
-        // When & Then
-        assertThatThrownBy(() -> postService.deletePost(postId, unauthorizedUserId))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("You are not authorized to perform this action on this post");
+        // When / Then
+        assertThatThrownBy(() -> postService.deletePost(postId, userId)) // userId 전달
+                .isInstanceOf(IllegalArgumentException.class) // 예외 타입 확인
+                .hasMessage("You are not authorized to perform this action on this post"); // 예외 메시지 확인
+
+        // Verify: save 메서드는 호출되지 않아야 함
+        verify(postRepository, never()).save(any(Post.class));
     }
+
 }

@@ -103,7 +103,7 @@ public class Post extends BaseEntity {
     }
 
     public void validateUserAuthorization(Long userId) {
-        if (this.userId.equals(userId)) {
+        if (!this.userId.equals(userId)) {
             throw new IllegalArgumentException("You are not authorized to perform this action on this post");
         }
     }

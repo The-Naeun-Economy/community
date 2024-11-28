@@ -4,6 +4,7 @@ import com.economy.community.domain.CommunityCategory;
 import com.economy.community.domain.Post;
 import com.economy.community.domain.QPost;
 import com.economy.community.dto.PostResponse;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.util.List;
@@ -17,44 +18,37 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<PostResponse> findPostsByCategory(String category) {
+    public List<PostResponse> findAllPosts(String category, int page, int size) {
         QPost post = QPost.post;
 
-        CommunityCategory categoryEnum = parseCategory(category);
+        CommunityCategory categoryEnum = CommunityCategory.valueOfCategory(category);
+
+        BooleanBuilder builder = new BooleanBuilder();
+
+        // 동적 조건: 삭제되지 않은 게시글
+        builder.and(post.deleted.eq(false));
+
+        // 동적 조건: 특정 카테고리 필터
+        builder.and(post.category.eq(categoryEnum));
 
         return queryFactory
                 .select(Projections.constructor(PostResponse.class,
                         post.id,
                         post.category,
                         post.title,
-                        post.content))
+                        post.content,
+                        post.userId,
+                        post.userNickname,
+                        post.createdAt,
+                        post.likesCount,
+                        post.viewCount,
+                        post.commentsCount))
                 .from(post)
-                .where(post.category.eq(CommunityCategory.valueOf(category))
-                        .and(post.deleted.eq(false)))
+                .where(builder)
+                .orderBy(post.createdAt.desc())
+                .offset((long) page * size)
+                .limit(size)
                 .fetch();
-    }
-
-    @Override
-    public List<PostResponse> findAllPosts() {
-        QPost post = QPost.post;
-
-        return queryFactory
-                .select(Projections.constructor(PostResponse.class,
-                        post.id,
-                        post.category,
-                        post.title,
-                        post.content))
-                .from(post)
-                .where(post.deleted.eq(false))
-                .fetch();
-    }
-
-    private CommunityCategory parseCategory(String category) {
-        try {
-            return CommunityCategory.valueOf(category.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid category: " + category, e);
-        }
     }
 
     @Override
@@ -71,5 +65,20 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         }
 
         return result;
+    }
+
+    @Override
+    public List<PostResponse> getMyPosts(Long userId) {
+        QPost post = QPost.post;
+
+        return queryFactory
+                .select(Projections.constructor(PostResponse.class,
+                        post.id,
+                        post.category,
+                        post.title,
+                        post.content))
+                .from(post)
+                .where(post.userId.eq(userId).and(post.deleted.eq(false)))
+                .fetch();
     }
 }
