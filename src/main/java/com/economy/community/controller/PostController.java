@@ -8,6 +8,7 @@ import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
 import com.economy.community.jwt.TokenProvider;
 import com.economy.community.service.PostService;
+import jakarta.persistence.Table;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+@Table
 @CrossOrigin("*")
 @RestController
 @RequestMapping("/api/v1/posts")
