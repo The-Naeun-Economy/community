@@ -1,18 +1,16 @@
 package com.economy.community.jwt;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
-@Configuration
 @Component
+@Configuration
+@RequiredArgsConstructor
 public class JwtFilterConfig {
 
     private final TokenProvider tokenProvider;
-
-    public JwtFilterConfig(TokenProvider tokenProvider) {
-        this.tokenProvider = tokenProvider;
-    }
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
