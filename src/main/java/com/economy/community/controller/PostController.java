@@ -6,14 +6,13 @@ import com.economy.community.dto.PostLikesResponse;
 import com.economy.community.dto.PostResponse;
 import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
+import com.economy.community.jwt.TokenProvider;
 import com.economy.community.service.PostService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +20,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PostController {
 
     private final PostService service;
+    private final TokenProvider tokenProvider;
 
     @GetMapping
     public List<PostResponse> getPosts(
@@ -44,8 +45,8 @@ public class PostController {
     }
 
     @GetMapping("/users/me")
-    public List<PostResponse> getMyPosts() {
-        Long userId = getAuthenticatedUserId();
+    public List<PostResponse> getMyPosts(@RequestHeader String Authorization) {
+        Long userId = tokenProvider.getUserIdFromToken(Authorization);
         return service.getMyPosts(userId);
     }
 
@@ -56,52 +57,36 @@ public class PostController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CreatePostResponse createCommunity(@RequestBody @Valid CreatePostRequest request) {
-        Long userId = getAuthenticatedUserId();
-        String userNickname = getAuthenticatedUserNickname();
+    public CreatePostResponse createCommunity(@RequestBody @Valid CreatePostRequest request,
+                                              @RequestHeader String Authorization) {
+        Long userId = tokenProvider.getUserIdFromToken(Authorization);
+        String userNickname = tokenProvider.getNickNameFromToken(Authorization);
 
         return service.createPost(request, userId, userNickname);
     }
 
     @PutMapping("/{id}")
     public UpdatePostResponse updateCommunity(@RequestBody UpdatePostRequest request,
-                                              @PathVariable Long id) {
-        Long userId = getAuthenticatedUserId();
+                                              @PathVariable Long id,
+                                              @RequestHeader String Authorization) {
+        Long userId = tokenProvider.getUserIdFromToken(Authorization);
         return service.updatePost(request, id, userId);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void deleteCommunity(@PathVariable Long id) {
-        Long userId = getAuthenticatedUserId();
+    public void deleteCommunity(@PathVariable Long id, @RequestHeader String Authorization) {
+        Long userId = tokenProvider.getUserIdFromToken(Authorization);
         service.deletePost(id, userId);
     }
 
     // 게시글 좋아요
     @PostMapping("/{id}/like")
-    public ResponseEntity<PostLikesResponse> likePost(@PathVariable Long id) {
-        Long userId = getAuthenticatedUserId();
-        String userNickname = getAuthenticatedUserNickname();
+    public ResponseEntity<PostLikesResponse> likePost(@PathVariable Long id, @RequestHeader String Authorization) {
+        Long userId = tokenProvider.getUserIdFromToken(Authorization);
+        String userNickname = tokenProvider.getNickNameFromToken(Authorization);
 
         PostLikesResponse response = service.toggleLike(id, userId, userNickname);
         return ResponseEntity.ok(response);
-    }
-
-    // 인증된 사용자 ID 가져오기
-    private Long getAuthenticatedUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new IllegalArgumentException("User is not authenticated");
-        }
-        return (Long) authentication.getPrincipal();
-    }
-
-    // 인증된 사용자 닉네임 가져오기
-    private String getAuthenticatedUserNickname() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new IllegalArgumentException("User is not authenticated");
-        }
-        return (String) authentication.getCredentials();
     }
 }
