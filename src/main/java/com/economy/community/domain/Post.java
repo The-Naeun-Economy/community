@@ -36,7 +36,7 @@ public class Post extends BaseEntity {
     @NotNull
     private String title;
 
-    @Column(name = "post_content")
+    @Column(name = "post_content", columnDefinition = "TEXT")
     private String content;
 
     @Column(name = "community_category")
