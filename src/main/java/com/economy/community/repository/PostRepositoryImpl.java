@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 public class PostRepositoryImpl implements PostRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
+    private final PostCacheRepository postCacheRepository;
 
     @Override
     public List<PostResponse> findAllPosts(String category, int page, int size) {
@@ -29,7 +30,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
             builder.and(post.category.eq(categoryEnum));
         }
 
-        return queryFactory
+        List<PostResponse> posts = queryFactory
                 .select(Projections.constructor(PostResponse.class,
                         post.id,
                         post.category,
@@ -38,7 +39,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                         post.userId,
                         post.userNickname,
                         post.createdAt,
-                        post.likesCount,
+                        post.likesCount, // DB의 좋아요 수 (기본값)
                         post.viewCount,
                         post.commentsCount))
                 .from(post)
@@ -47,6 +48,14 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .offset((long) page * size)
                 .limit(size)
                 .fetch();
+
+        // Redis에서 좋아요 수를 조회하여 업데이트
+        posts.forEach(p -> {
+            Long redisLikeCount = postCacheRepository.getLikeCount(p.getId());
+            p.withUpdatedLikesCount(redisLikeCount); // 좋아요 수 업데이트
+        });
+
+        return posts;
     }
 
     @Override
@@ -62,6 +71,10 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
             throw new IllegalArgumentException("Post not found with id: " + id);
         }
 
+        // Redis에서 좋아요 수를 조회하고 동기화 (Optional)
+        Long redisLikeCount = postCacheRepository.getLikeCount(result.getId());
+        result.syncLikesCount(redisLikeCount); // 좋아요 수를 동기화하는 메서드가 필요
+
         return result;
     }
 
@@ -69,14 +82,28 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     public List<PostResponse> getMyPosts(Long userId) {
         QPost post = QPost.post;
 
-        return queryFactory
+        List<PostResponse> posts = queryFactory
                 .select(Projections.constructor(PostResponse.class,
                         post.id,
                         post.category,
                         post.title,
-                        post.content))
+                        post.content,
+                        post.userId,
+                        post.userNickname,
+                        post.createdAt,
+                        post.likesCount, // DB의 좋아요 수
+                        post.viewCount,
+                        post.commentsCount))
                 .from(post)
                 .where(post.userId.eq(userId).and(post.deleted.eq(false)))
                 .fetch();
+
+        // Redis에서 좋아요 수를 조회하여 업데이트
+        posts.forEach(p -> {
+            Long redisLikeCount = postCacheRepository.getLikeCount(p.getId());
+            p.withUpdatedLikesCount(redisLikeCount); // 좋아요 수 업데이트
+        });
+
+        return posts;
     }
 }
