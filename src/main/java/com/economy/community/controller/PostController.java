@@ -2,6 +2,7 @@ package com.economy.community.controller;
 
 import com.economy.community.dto.CreatePostRequest;
 import com.economy.community.dto.CreatePostResponse;
+import com.economy.community.dto.GetMyLikedPostResponse;
 import com.economy.community.dto.PostLikesResponse;
 import com.economy.community.dto.PostResponse;
 import com.economy.community.dto.UpdatePostRequest;
@@ -84,11 +85,22 @@ public class PostController {
 
     // 게시글 좋아요
     @PostMapping("/{id}/like")
-    public ResponseEntity<PostLikesResponse> likePost(@PathVariable Long id, @RequestHeader String Authorization) {
+    public ResponseEntity<PostLikesResponse> likePost(@PathVariable Long id,
+                                                      @RequestHeader String Authorization) {
         Long userId = tokenProvider.getUserIdFromToken(Authorization);
         String userNickname = tokenProvider.getNickNameFromToken(Authorization);
 
         PostLikesResponse response = service.toggleLike(id, userId, userNickname);
         return ResponseEntity.ok(response);
+    }
+
+    // 게시글 좋아요 목록 조회(마이페이지)
+    @GetMapping("/users/me/like")
+    public ResponseEntity<List<GetMyLikedPostResponse>> getMyLikedPosts(@RequestHeader String Authorization) {
+        Long userId = tokenProvider.getUserIdFromToken(Authorization);
+
+        List<GetMyLikedPostResponse> likedPosts = service.getMyLikedPosts(userId);
+
+        return ResponseEntity.ok(likedPosts);
     }
 }

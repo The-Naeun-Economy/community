@@ -2,6 +2,7 @@ package com.economy.community.service;
 
 import com.economy.community.dto.CreatePostRequest;
 import com.economy.community.dto.CreatePostResponse;
+import com.economy.community.dto.GetMyLikedPostResponse;
 import com.economy.community.dto.PostLikesResponse;
 import com.economy.community.dto.PostResponse;
 import com.economy.community.dto.UpdatePostRequest;
@@ -22,4 +23,6 @@ public interface PostService {
     void deletePost(Long id, Long userId);
 
     PostLikesResponse toggleLike(Long id, Long userId, String userNickname);
+
+    List<GetMyLikedPostResponse> getMyLikedPosts(Long userId);
 }
