@@ -60,12 +60,21 @@ public class PostCacheRepository implements CacheRepository {
     // 좋아요 수 증가
     public void incrementLikeCount(Long postId) {
         String cacheKey = generateLikeCacheKey(postId);
+        // 키가 없을 경우 초기값 설정
+        if (Boolean.FALSE.equals(redisTemplate.hasKey(cacheKey))) {
+            redisTemplate.opsForValue().set(cacheKey, 0L);
+        }
         redisTemplate.opsForValue().increment(cacheKey);
     }
 
     // 좋아요 수 감소
     public void decrementLikeCount(Long postId) {
         String cacheKey = generateLikeCacheKey(postId);
+
+        if (Boolean.FALSE.equals(redisTemplate.hasKey(cacheKey))) {
+            redisTemplate.opsForValue().set(cacheKey, 0L);
+        }
+        
         redisTemplate.opsForValue().decrement(cacheKey);
     }
 }

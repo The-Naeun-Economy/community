@@ -116,7 +116,7 @@ public class PostServiceImpl implements PostService {
         boolean isLiked;
 
         if (existingLike.isEmpty()) {
-            // 좋아요 추가
+            // 중복 방지: 유니크 제약 조건을 통해 데이터베이스 레벨에서 중복 방지
             PostLike newLike = PostLike.builder()
                     .userId(userId)
                     .userNickname(userNickname)
@@ -124,21 +124,22 @@ public class PostServiceImpl implements PostService {
                     .build();
             postLikeRepository.save(newLike);
 
-            postCacheRepository.incrementLikeCount(id);
+            postCacheRepository.incrementLikeCount(id); // Redis에서 좋아요 수 증가
             isLiked = true;
         } else {
             // 좋아요 취소
             PostLike like = existingLike.get();
             postLikeRepository.delete(like);
 
-            postCacheRepository.decrementLikeCount(id);
+            postCacheRepository.decrementLikeCount(id); // Redis에서 좋아요 수 감소
             isLiked = false;
         }
 
+        // Redis에서 최신 좋아요 수 가져오기
         Long updatedLikeCount = postCacheRepository.getLikeCount(id);
 
+        // 좋아요 수 동기화
         post.syncLikesCount(updatedLikeCount);
-        // 게시글의 변경된 좋아요 수 저장
         postRepository.save(post);
 
         return new PostLikesResponse(isLiked, updatedLikeCount);
