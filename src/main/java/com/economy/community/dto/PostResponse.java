@@ -34,4 +34,20 @@ public class PostResponse {
                 post.getCommentsCount()
         );
     }
+
+    // 좋아요 수를 업데이트한 새로운 PostResponse 반환
+    public PostResponse withUpdatedLikesCount(Long likeCount) {
+        return new PostResponse(
+                this.id,
+                this.category,
+                this.title,
+                this.content,
+                this.userId,
+                this.userNickname,
+                this.createdAt,
+                likeCount, // 새로운 좋아요 수
+                this.viewCount,
+                this.commentsCount
+        );
+    }
 }

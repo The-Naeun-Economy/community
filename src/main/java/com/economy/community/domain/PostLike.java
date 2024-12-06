@@ -37,5 +37,5 @@ public class PostLike {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
-    private Post postId;
+    private Post post;
 }

@@ -16,13 +16,13 @@ public class UpdatePostResponse {
     private Long viewCount;
     private Long commentsCount;
 
-    public UpdatePostResponse(Post post) {
+    public UpdatePostResponse(Post post, Long likeCount) {
         this.id = post.getId();
         this.title = post.getTitle();
         this.content = post.getContent();
         this.userId = post.getUserId();
         this.userNickname = post.getUserNickname();
-        this.likesCount = post.getLikesCount();
+        this.likesCount = likeCount;
         this.viewCount = post.getViewCount();
         this.commentsCount = post.getCommentsCount();
     }

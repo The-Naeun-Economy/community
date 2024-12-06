@@ -10,3 +10,8 @@ services:
       MYSQL_PASSWORD: 1234
     ports:
       - "3309:3306"
+  redis:
+    image: redis:latest
+    container_name: community-redis
+    ports:
+      - "6381:6379"

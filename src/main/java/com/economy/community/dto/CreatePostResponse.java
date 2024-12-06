@@ -13,18 +13,18 @@ public class CreatePostResponse {
     private Long userId;
     private String userNickname;
     private String category;
-    private Long likesCount;
+    private Long likeCount;
     private Long viewCount;
     private Long commentsCount;
 
-    public CreatePostResponse(Post post) {
+    public CreatePostResponse(Post post, Long likeCount) {
         this.id = post.getId();
         this.title = post.getTitle();
         this.content = post.getContent();
         this.userId = post.getUserId();
         this.userNickname = post.getUserNickname();
         this.category = post.getCategory().name();
-        this.likesCount = post.getLikesCount();
+        this.likeCount = likeCount;
         this.viewCount = post.getViewCount();
         this.commentsCount = post.getCommentsCount();
     }

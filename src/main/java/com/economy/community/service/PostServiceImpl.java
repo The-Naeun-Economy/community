@@ -5,14 +5,17 @@ import com.economy.community.domain.Post;
 import com.economy.community.domain.PostLike;
 import com.economy.community.dto.CreatePostRequest;
 import com.economy.community.dto.CreatePostResponse;
+import com.economy.community.dto.GetMyLikedPostResponse;
 import com.economy.community.dto.PostLikesResponse;
 import com.economy.community.dto.PostResponse;
 import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
+import com.economy.community.repository.PostCacheRepository;
 import com.economy.community.repository.PostLikeRepository;
 import com.economy.community.repository.PostRepository;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,30 +26,31 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
+    private final PostCacheRepository postCacheRepository;
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public List<PostResponse> getPosts(String category, int page, int size) {
         return postRepository.findAllPosts(category, page, size);
     }
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public List<PostResponse> getMyPosts(Long userId) {
         return postRepository.getMyPosts(userId);
     }
 
 
-    @Transactional(readOnly = true)
     @Override
+    @Transactional(readOnly = true)
     public PostResponse getPostById(Long id) {
         Post post = postRepository.findPostById(id);
         return PostResponse.from(post);
     }
 
 
-    @Transactional
     @Override
+    @Transactional
     public CreatePostResponse createPost(CreatePostRequest request, Long userId, String userNickname) {
         Post post = Post.builder()
                 .title(request.getTitle())
@@ -59,11 +63,14 @@ public class PostServiceImpl implements PostService {
                 .commentsCount(0L)
                 .build();
         Post savedPost = postRepository.save(post);
-        return new CreatePostResponse(savedPost);
+
+        // Response 반환
+        Long likeCount = 0L;
+        return new CreatePostResponse(savedPost, likeCount);
     }
 
-    @Transactional
     @Override
+    @Transactional
     public UpdatePostResponse updatePost(UpdatePostRequest request, Long id, Long userId) {
         Post post = postRepository.findPostById(id);
 
@@ -74,11 +81,14 @@ public class PostServiceImpl implements PostService {
         Post updatedPost = post.withUpdatedFields(request.getTitle(), request.getContent());
         Post savedPost = postRepository.save(updatedPost);
 
-        return new UpdatePostResponse(savedPost);
+        // 좋아요 수를 Redis에서 조회
+        Long likeCount = postCacheRepository.getLikeCount(savedPost.getId());
+
+        return new UpdatePostResponse(savedPost, likeCount);
     }
 
-    @Transactional
     @Override
+    @Transactional
     public void deletePost(Long id, Long userId) {
         Post post = postRepository.findPostById(id);
 
@@ -91,6 +101,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Transactional
     public PostLikesResponse toggleLike(Long id, Long userId, String userNickname) {
         // 게시글 조회
         Post post = postRepository.findPostById(id);
@@ -100,34 +111,52 @@ public class PostServiceImpl implements PostService {
         }
 
         // 좋아요 여부 확인
-        Optional<PostLike> existingLike = postLikeRepository.findByUserIdAndPostId(userId, post);
+        Optional<PostLike> existingLike = postLikeRepository.findByUserIdAndPostId(userId, post.getId());
 
         boolean isLiked;
 
         if (existingLike.isEmpty()) {
-            // 좋아요 추가
+            // 중복 방지: 유니크 제약 조건을 통해 데이터베이스 레벨에서 중복 방지
             PostLike newLike = PostLike.builder()
                     .userId(userId)
                     .userNickname(userNickname)
-                    .postId(post)
+                    .post(post)
                     .build();
             postLikeRepository.save(newLike);
 
-            post.incrementPostLikesCount();
+            postCacheRepository.incrementLikeCount(id); // Redis에서 좋아요 수 증가
             isLiked = true;
         } else {
             // 좋아요 취소
             PostLike like = existingLike.get();
             postLikeRepository.delete(like);
 
-            post.decrementLikeCount();
+            postCacheRepository.decrementLikeCount(id); // Redis에서 좋아요 수 감소
             isLiked = false;
         }
 
-        // 게시글의 변경된 좋아요 수 저장
+        // Redis에서 최신 좋아요 수 가져오기
+        Long updatedLikeCount = postCacheRepository.getLikeCount(id);
+
+        // 좋아요 수 동기화
+        post.syncLikesCount(updatedLikeCount);
         postRepository.save(post);
 
-        return new PostLikesResponse(isLiked, post.getLikesCount());
+        return new PostLikesResponse(isLiked, updatedLikeCount);
+    }
+
+    @Override
+    @Transactional
+    public List<GetMyLikedPostResponse> getMyLikedPosts(Long userId) {
+        List<PostLike> likedPosts = postLikeRepository.findByUserId(userId);
+
+        return likedPosts.stream()
+                .map(like -> new GetMyLikedPostResponse(
+                        like.getPost().getId(),
+                        like.getPost().getContent(),
+                        like.getPost().getLikesCount()
+                ))
+                .collect(Collectors.toList());
     }
 
 }

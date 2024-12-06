@@ -88,18 +88,8 @@ public class Post extends BaseEntity {
                 .build();
     }
 
-    public void incrementPostLikesCount() {
-        if (this.likesCount == null) {
-            this.likesCount = 1L;
-        } else {
-            this.likesCount += 1;
-        }
-    }
-
-    public void decrementLikeCount() {
-        if (this.likesCount > 0) {
-            this.likesCount -= 1;
-        }
+    public void syncLikesCount(Long cachedLikesCount) {
+        this.likesCount = cachedLikesCount;
     }
 
     public void validateUserAuthorization(Long userId) {
