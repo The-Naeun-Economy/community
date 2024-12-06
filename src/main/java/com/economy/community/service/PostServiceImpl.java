@@ -111,7 +111,7 @@ public class PostServiceImpl implements PostService {
         }
 
         // 좋아요 여부 확인
-        Optional<PostLike> existingLike = postLikeRepository.findByUserIdAndPostId(userId, post);
+        Optional<PostLike> existingLike = postLikeRepository.findByUserIdAndPostId(userId, post.getId());
 
         boolean isLiked;
 
