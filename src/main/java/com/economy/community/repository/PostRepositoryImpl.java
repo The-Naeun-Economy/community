@@ -39,7 +39,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                         post.userId,
                         post.userNickname,
                         post.createdAt,
-                        post.likesCount, // DB의 좋아요 수 (기본값)
+                        post.likesCount,
                         post.viewCount,
                         post.commentsCount))
                 .from(post)

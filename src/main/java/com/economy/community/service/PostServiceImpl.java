@@ -58,15 +58,14 @@ public class PostServiceImpl implements PostService {
                 .category(CommunityCategory.valueOf(request.getCategory()))
                 .userId(userId)
                 .userNickname(userNickname)
+                .likesCount(0L)
                 .viewCount(0L)
                 .commentsCount(0L)
                 .build();
         Post savedPost = postRepository.save(post);
 
-        postCacheRepository.incrementLikeCount(savedPost.getId()); // Redis 초기값 0L로 설정
-
         // Response 반환
-        Long likeCount = postCacheRepository.getLikeCount(savedPost.getId()); // Redis에서 가져옴
+        Long likeCount = 0L;
         return new CreatePostResponse(savedPost, likeCount);
     }
 
