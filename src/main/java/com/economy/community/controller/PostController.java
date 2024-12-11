@@ -108,15 +108,15 @@ public class PostController {
 
     // 게시글 조회수 증가
     @GetMapping("/{id}/view")
-    public ResponseEntity<Integer> postView(@PathVariable Long id) {
-        int updatedViewCount = postViewCountService.incrementPostViewCount(id);
+    public ResponseEntity<Long> postView(@PathVariable Long id) {
+        Long updatedViewCount = postViewCountService.incrementPostViewCount(id);
         return ResponseEntity.ok(updatedViewCount);
     }
 
     // 게시글 조회수 가져오기
     @GetMapping("/{id}/viewCount")
-    public ResponseEntity<Integer> getPostViewCount(@PathVariable Long id) {
-        int viewCount = postViewCountService.getPostViewCount(id);
+    public ResponseEntity<Long> getPostViewCount(@PathVariable Long id) {
+        Long viewCount = postViewCountService.getPostViewCount(id);
         return ResponseEntity.ok(viewCount);
     }
 }

@@ -12,16 +12,16 @@ public class PostViewCountServiceImpl implements PostViewCountService {
     private static final String VIEW_COUNT_KEY_PREFIX = "post:viewCount:";
 
     @Override
-    public int incrementPostViewCount(Long id) {
+    public Long incrementPostViewCount(Long id) {
         String redisKey = VIEW_COUNT_KEY_PREFIX + id;
         Long updatedCount = redisTemplate.opsForValue().increment(redisKey);
-        return updatedCount != null ? updatedCount.intValue() : 0;
+        return updatedCount != null ? Long.parseLong(updatedCount.toString()) : 0;
     }
 
     @Override
-    public int getPostViewCount(Long id) {
+    public Long getPostViewCount(Long id) {
         String redisKey = VIEW_COUNT_KEY_PREFIX + id;
         Integer count = (Integer) redisTemplate.opsForValue().get(redisKey);
-        return count != null ? count : 0;
+        return count != null ? Long.parseLong(count.toString()) : 0L;
     }
 }

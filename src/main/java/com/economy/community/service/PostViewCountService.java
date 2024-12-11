@@ -1,8 +1,8 @@
 package com.economy.community.service;
 
 public interface PostViewCountService {
-    
-    int incrementPostViewCount(Long id);
 
-    int getPostViewCount(Long id);
+    Long incrementPostViewCount(Long id);
+
+    Long getPostViewCount(Long id);
 }

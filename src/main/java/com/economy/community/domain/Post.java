@@ -92,6 +92,10 @@ public class Post extends BaseEntity {
         this.likesCount = cachedLikesCount;
     }
 
+    public void syncViewCount(Long cachedViewCount) {
+        this.viewCount = cachedViewCount;
+    }
+
     public void validateUserAuthorization(Long userId) {
         if (!this.userId.equals(userId)) {
             throw new IllegalArgumentException("You are not authorized to perform this action on this post");

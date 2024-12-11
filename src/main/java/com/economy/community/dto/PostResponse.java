@@ -50,4 +50,20 @@ public class PostResponse {
                 this.commentsCount
         );
     }
+
+    // 조회수 업데이트한 새로운 PostResponse 반환
+    public PostResponse withUpdatedViewCount(Long viewCount) {
+        return new PostResponse(
+                this.id,
+                this.category,
+                this.title,
+                this.content,
+                this.userId,
+                this.userNickname,
+                this.createdAt,
+                this.likesCount,
+                viewCount, // 새로운 조회수
+                this.commentsCount
+        );
+    }
 }

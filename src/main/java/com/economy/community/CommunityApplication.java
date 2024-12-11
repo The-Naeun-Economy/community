@@ -7,8 +7,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.kafka.support.converter.JsonMessageConverter;
 import org.springframework.kafka.support.converter.RecordMessageConverter;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @EnableCaching
+@EnableScheduling
 @EnableJpaAuditing
 @SpringBootApplication
 public class CommunityApplication {
@@ -18,7 +20,7 @@ public class CommunityApplication {
     }
 
     @Bean
-    public RecordMessageConverter converter(){
+    public RecordMessageConverter converter() {
         return new JsonMessageConverter();
     }
 
