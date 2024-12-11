@@ -11,4 +11,6 @@ public interface PostRepositoryCustom {
     Post findPostById(Long id);
 
     List<PostResponse> getMyPosts(Long userId);
+
+    void updatePostViewCount(Long id, int increment);
 }

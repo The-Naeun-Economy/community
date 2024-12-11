@@ -7,6 +7,8 @@ import com.economy.community.dto.PostResponse;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.querydsl.jpa.impl.JPAUpdateClause;
+import jakarta.persistence.EntityManager;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 
@@ -15,6 +17,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
     private final PostCacheRepository postCacheRepository;
+    private final EntityManager entityManager;
 
     @Override
     public List<PostResponse> findAllPosts(String category, int page, int size) {
@@ -53,6 +56,12 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         posts.forEach(p -> {
             Long redisLikeCount = postCacheRepository.getLikeCount(p.getId());
             p.withUpdatedLikesCount(redisLikeCount); // 좋아요 수 업데이트
+
+            // Redis에서 조회수 조회하여 업데이트
+            Long redisViewCount = postCacheRepository.getViewCount(p.getId());
+            if (redisViewCount != null) {
+                p.withUpdatedViewCount(redisViewCount); // 조회수 업데이트
+            }
         });
 
         return posts;
@@ -71,9 +80,16 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
             throw new IllegalArgumentException("Post not found with id: " + id);
         }
 
+        // 조회수 증가
+        postCacheRepository.incrementViewCount(result.getId());
+
         // Redis에서 좋아요 수를 조회하고 동기화 (Optional)
         Long redisLikeCount = postCacheRepository.getLikeCount(result.getId());
-        result.syncLikesCount(redisLikeCount); // 좋아요 수를 동기화하는 메서드가 필요
+        result.syncLikesCount(redisLikeCount); // 좋아요 수 동기화
+
+        // Redis에서 조회수 조회하고 동기화
+        Long redisViewCount = postCacheRepository.getViewCount(result.getId());
+        result.syncViewCount(redisViewCount); // 조회수 동기화
 
         return result;
     }
@@ -105,5 +121,15 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         });
 
         return posts;
+    }
+
+    @Override
+    public void updatePostViewCount(Long id, int increment) {
+        QPost post = QPost.post;
+
+        new JPAUpdateClause(entityManager, post)
+                .set(post.viewCount, post.viewCount.add(increment))
+                .where(post.id.eq(id))
+                .execute();
     }
 }
