@@ -9,6 +9,7 @@ import com.economy.community.dto.UpdatePostRequest;
 import com.economy.community.dto.UpdatePostResponse;
 import com.economy.community.jwt.TokenProvider;
 import com.economy.community.service.PostService;
+import com.economy.community.service.PostViewCountService;
 import jakarta.persistence.Table;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -37,6 +38,7 @@ public class PostController {
 
     private final PostService service;
     private final TokenProvider tokenProvider;
+    private final PostViewCountService postViewCountService;
 
     @GetMapping
     public List<PostResponse> getPosts(
@@ -102,5 +104,19 @@ public class PostController {
         List<GetMyLikedPostResponse> likedPosts = service.getMyLikedPosts(userId);
 
         return ResponseEntity.ok(likedPosts);
+    }
+
+    // 게시글 조회수 증가
+    @GetMapping("/{id}/view")
+    public ResponseEntity<Integer> postView(@PathVariable Long id) {
+        int updatedViewCount = postViewCountService.incrementPostViewCount(id);
+        return ResponseEntity.ok(updatedViewCount);
+    }
+
+    // 게시글 조회수 가져오기
+    @GetMapping("/{id}/viewCount")
+    public ResponseEntity<Integer> getPostViewCount(@PathVariable Long id) {
+        int viewCount = postViewCountService.getPostViewCount(id);
+        return ResponseEntity.ok(viewCount);
     }
 }

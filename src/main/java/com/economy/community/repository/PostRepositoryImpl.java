@@ -7,6 +7,8 @@ import com.economy.community.dto.PostResponse;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.querydsl.jpa.impl.JPAUpdateClause;
+import jakarta.persistence.EntityManager;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 
@@ -15,6 +17,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
     private final PostCacheRepository postCacheRepository;
+    private final EntityManager entityManager;
 
     @Override
     public List<PostResponse> findAllPosts(String category, int page, int size) {
@@ -105,5 +108,15 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         });
 
         return posts;
+    }
+
+    @Override
+    public void updatePostViewCount(Long id, int increment) {
+        QPost post = QPost.post;
+
+        new JPAUpdateClause(entityManager, post)
+                .set(post.viewCount, post.viewCount.add(increment))
+                .where(post.id.eq(id))
+                .execute();
     }
 }
