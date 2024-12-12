@@ -1,5 +1,6 @@
 package com.economy.community.service;
 
+import com.economy.community.domain.CommentEvent;
 import com.economy.community.domain.CommunityCategory;
 import com.economy.community.domain.Post;
 import com.economy.community.domain.PostLike;
@@ -13,16 +14,21 @@ import com.economy.community.dto.UpdatePostResponse;
 import com.economy.community.repository.PostCacheRepository;
 import com.economy.community.repository.PostLikeRepository;
 import com.economy.community.repository.PostRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
+
+    private final ObjectMapper objectMapper;
+    private final KafkaService kafkaService;
 
     private final PostRepository postRepository;
     private final PostLikeRepository postLikeRepository;
@@ -158,5 +164,24 @@ public class PostServiceImpl implements PostService {
                 ))
                 .collect(Collectors.toList());
     }
+
+    @KafkaListener(topics = "comment-topic", groupId = "post-service-group")
+    public void handleCommentEvent(byte[] message) {
+        try {
+            CommentEvent event = objectMapper.readValue(message, CommentEvent.class);
+
+            // 댓글 생성 이벤트 처리
+            if ("CREATE".equals(event.getAction())) {
+                kafkaService.incrementCommentsCount(event.getPostId());
+            }
+            // 댓글 삭제 이벤트 처리
+            else if ("DELETE".equals(event.getAction())) {
+                kafkaService.decrementCommentsCount(event.getPostId());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Kafka 메시지 처리 실패", e);
+        }
+    }
+
 
 }

@@ -96,6 +96,18 @@ public class Post extends BaseEntity {
         this.viewCount = cachedViewCount;
     }
 
+    // 댓글 추가 시 호출
+    public void incrementCommentsCount() {
+        this.commentsCount++;
+    }
+
+    // 댓글 삭제 시 호출
+    public void decrementCommentsCount() {
+        if (this.commentsCount > 0) {
+            this.commentsCount--;
+        }
+    }
+
     public void validateUserAuthorization(Long userId) {
         if (!this.userId.equals(userId)) {
             throw new IllegalArgumentException("You are not authorized to perform this action on this post");
