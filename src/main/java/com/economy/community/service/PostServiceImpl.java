@@ -132,6 +132,10 @@ public class PostServiceImpl implements PostService {
 
             postCacheRepository.incrementLikeCount(id); // Redis에서 좋아요 수 증가
             isLiked = true;
+
+            // **좋아요 알림 생성**
+            createLikeNotification(post, userNickname);
+
         } else {
             // 좋아요 취소
             PostLike like = existingLike.get();
@@ -149,6 +153,16 @@ public class PostServiceImpl implements PostService {
         postRepository.save(post);
 
         return new PostLikesResponse(isLiked, updatedLikeCount);
+    }
+
+    private void createLikeNotification(Post post, String likerNickname) {
+        // 게시글 작성자에게 알림 생성 (자신이 자신의 게시글에 좋아요를 누른 경우 제외)
+        if (!post.getUserId().equals(post.getId())) {
+            String notificationMessage = likerNickname + "님이 내 게시글에 좋아요를 눌렀습니다.";
+            String notificationDetails = "게시글 제목: " + post.getTitle() + "\n게시글 내용: " + post.getContent();
+            postCacheRepository.addNotification(post.getUserId(), notificationMessage, post.getId(),
+                    notificationDetails);
+        }
     }
 
     @Override
@@ -173,6 +187,10 @@ public class PostServiceImpl implements PostService {
             // 댓글 생성 이벤트 처리
             if ("CREATE".equals(event.getAction())) {
                 kafkaService.incrementCommentsCount(event.getPostId());
+
+                // 댓글 알림 생성
+                createCommentNotification(event);
+
             }
             // 댓글 삭제 이벤트 처리
             else if ("DELETE".equals(event.getAction())) {
@@ -183,5 +201,17 @@ public class PostServiceImpl implements PostService {
         }
     }
 
+    private void createCommentNotification(CommentEvent event) {
+        // 게시글 조회
+        Post post = postRepository.findPostById(event.getPostId());
+        if (post == null) {
+            throw new IllegalArgumentException("게시글이 존재하지 않습니다.");
+        }
+
+        // 댓글 작성 알림 생성
+        String notificationMessage = event.getUserNickname() + "님이 내 게시글에 댓글을 작성했습니다.";
+        String notificationDetails = "댓글 내용: " + event.getContent();
+        postCacheRepository.addNotification(post.getUserId(), notificationMessage, post.getId(), notificationDetails);
+    }
 
 }
