@@ -1,5 +1,6 @@
 package com.economy.community.service;
 
+import com.economy.community.repository.PostCacheRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -9,18 +10,18 @@ import org.springframework.stereotype.Service;
 public class PostViewCountServiceImpl implements PostViewCountService {
 
     private final RedisTemplate<String, Object> redisTemplate;
-    private static final String VIEW_COUNT_KEY_PREFIX = "post:viewCount:";
+    private final PostCacheRepository postCacheRepository;
 
     @Override
     public Long incrementPostViewCount(Long id) {
-        String redisKey = VIEW_COUNT_KEY_PREFIX + id;
+        String redisKey = postCacheRepository.generateViewCacheKey(id);
         Long updatedCount = redisTemplate.opsForValue().increment(redisKey);
         return updatedCount != null ? Long.parseLong(updatedCount.toString()) : 0;
     }
 
     @Override
     public Long getPostViewCount(Long id) {
-        String redisKey = VIEW_COUNT_KEY_PREFIX + id;
+        String redisKey = postCacheRepository.generateViewCacheKey(id);
         Integer count = (Integer) redisTemplate.opsForValue().get(redisKey);
         return count != null ? Long.parseLong(count.toString()) : 0L;
     }

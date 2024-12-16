@@ -16,7 +16,6 @@ import org.springframework.stereotype.Repository;
 public class PostCacheRepository implements CacheRepository {
 
     public static final String CACHE_KEY = "posts-cache";
-    private final String cacheKey = CACHE_KEY;
 
     private final RedisTemplate<String, Object> redisTemplate;
 
@@ -25,7 +24,7 @@ public class PostCacheRepository implements CacheRepository {
 
     @Override
     public String getCacheKey() {
-        return cacheKey;
+        return CACHE_KEY;
     }
 
     @Override
@@ -86,7 +85,7 @@ public class PostCacheRepository implements CacheRepository {
         redisTemplate.opsForValue().decrement(cacheKey);
     }
 
-    // 좋아요 캐시 키 생성
+    // 조회수 캐시 키 생성
     public String generateViewCacheKey(Long postId) {
         return String.format("%s::%d::views", CACHE_KEY, postId);
     }
