@@ -124,7 +124,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     }
 
     @Override
-    public void updatePostViewCount(Long id, int increment) {
+    public void updatePostViewCount(Long id, Long increment) {
         QPost post = QPost.post;
 
         new JPAUpdateClause(entityManager, post)

@@ -21,16 +21,22 @@ public class PostViewCountBatchService {
     public void syncViewCountsToDatabase() {
         System.out.println("PostViewCountBatchService 돌아가는 중임...");
 
-        Set<String> keys = redisTemplate.keys("posts-cache::*::views");
+        Set<String> keys = redisTemplate.keys(postCacheRepository.generateViewCacheKey(0L).replace("0", "*"));
+
         if (keys != null) {
             for (String key : keys) {
                 Long postId = extractPostIdFromKey(key); // postId 추출
-                Integer increment = (Integer) redisTemplate.opsForValue().get(key);
-                if (increment != null && increment > 0) {
-                    // 데이터베이스에 저장
-                    postRepository.updatePostViewCount(postId, increment);
-                    // Redis에서 초기화
-                    redisTemplate.opsForValue().set(postCacheRepository.generateViewCacheKey(postId), 0L);
+                Long redisViewCount = (Long) redisTemplate.opsForValue().get(key);
+                if (redisViewCount != null && redisViewCount > 0) {
+                    // DB에서 현재 조회수 가져오기
+                    Long dbViewCount = postRepository.findViewCountById(postId);
+
+                    // DB에 조회수 누적 반영
+                    Long totalViewCount = dbViewCount + redisViewCount;
+                    postRepository.updatePostViewCount(postId, totalViewCount);
+
+                    // Redis에서 최신 값을 업데이트 (삭제하지 않고 누적)
+                    redisTemplate.opsForValue().set(key, totalViewCount); // Redis에 새로 업데이트된 값 저장
                 }
             }
         }
